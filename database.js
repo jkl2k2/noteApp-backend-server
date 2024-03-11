@@ -1,5 +1,5 @@
-import mysql from 'mysql2'
-import dotenv from 'dotenv'
+import mysql from 'mysql2';
+import dotenv from 'dotenv';
 dotenv.config();
 
 const pool = mysql.createPool({
@@ -10,7 +10,7 @@ const pool = mysql.createPool({
 }).promise();
 
 
-export async function getAllNotes(){
+export async function getAllNotes() {
     const [rows] = await pool.query(`SELECT * FROM notes`);
     return rows;
 }
@@ -33,12 +33,12 @@ export async function createNote(title, content, url) {
     return getNoteById(id);
 }
 
-export async function deleteNote(id){
+export async function deleteNote(id) {
     const [note] = await pool.query(`
     DELETE FROM notes WHERE NoteId = ?`, [id]);
 }
 
-export async function getAllTags(){
+export async function getAllTags() {
     const [rows] = await pool.query(`SELECT * FROM tags`);
     return rows;
 }
