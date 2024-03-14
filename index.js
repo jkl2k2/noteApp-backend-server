@@ -14,7 +14,7 @@ app.get("/notes", async (req, res) => {
             res.status(201).send(notes);
         }
     } catch (err) {
-        res.status(404).json({ error: "No notes were found" });
+        res.status(500).json({ error: err });
     }
 });
 
@@ -30,7 +30,7 @@ app.get("/note/:id", async (req, res) => {
         }
 
     } catch (err) {
-        res.status(404).json({ error: "No notes were found" });
+        res.status(500).json({ error: err });
     }
 });
 
@@ -45,7 +45,7 @@ app.post("/notes", async (req, res) => {
             res.status(201).send(note);
         }
     } catch (err) {
-        res.status(404).json({ error: "Your note was not found" });
+        res.status(500).json({ error: err });
     }
 });
 
@@ -55,7 +55,7 @@ app.delete("/note/:id", async (req, res) => {
         const note = await deleteNote(id);
         res.status(201).send(note);
     } catch (err) {
-        res.status(404).json({ error: "Your note was not deleted" });
+        res.status(500).json({ error: err });
     }
 });
 
@@ -69,7 +69,7 @@ app.get("/tags", async (req, res) => {
             res.status(201).send(tags);
         }
     } catch (err) {
-        res.status(404).json({ error: "No tags were found" });
+        res.status(500).json({ error: err });
     }
 });
 
@@ -85,7 +85,7 @@ app.get("/tag/:id", async (req, res) => {
         }
 
     } catch (err) {
-        res.status(404).json({ error: "No tag were found" });
+        res.status(500).json({ error: err });
     }
 });
 
@@ -101,7 +101,7 @@ app.get("/lookuptag/:tag", async (req, res) => {
         }
 
     } catch (err) {
-        res.status(404).json({ error: "No notes were found" });
+        res.status(500).json({ error: err });
     }
 });
 
@@ -116,7 +116,7 @@ app.post("/tags", async (req, res) => {
             res.status(201).send(newtag);
         }
     } catch (err) {
-        res.status(404).json({ error: "No tag was created" });
+        res.status(500).json({ error: err });
     }
 });
 
