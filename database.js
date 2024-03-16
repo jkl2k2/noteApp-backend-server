@@ -1,5 +1,5 @@
-import mysql from 'mysql2'
-import dotenv from 'dotenv'
+import mysql from 'mysql2';
+import dotenv from 'dotenv';
 dotenv.config();
 
 const pool = mysql.createPool({
@@ -10,7 +10,7 @@ const pool = mysql.createPool({
 }).promise();
 
 
-export async function getAllNotes(){
+export async function getAllNotes() {
     const [rows] = await pool.query(`SELECT * FROM notes`);
     return rows;
 }
@@ -33,12 +33,12 @@ export async function createNote(title, content, url) {
     return getNoteById(id);
 }
 
-export async function deleteNote(id){
+export async function deleteNote(id) {
     const [note] = await pool.query(`
     DELETE FROM notes WHERE noteid = ?`, [id]);
 }
 
-export async function getAllTags(){
+export async function getAllTags() {
     const [rows] = await pool.query(`SELECT * FROM tags`);
     return rows;
 }
@@ -70,7 +70,7 @@ export async function createTag(tag) {
     return getTagById(id);
 }
 
-export async function getAllLabels(){
+export async function getAllLabels() {
     const [rows] = await pool.query(`SELECT * FROM label`);
     return rows;
 }
@@ -83,7 +83,7 @@ export async function createLabel(NoteId, TagId) {
     return getNoteWithTagById(NoteId);
 }
 
-export async function getAllNotesWithTags(){
+export async function getAllNotesWithTags() {
     const [rows] = await pool.query(`
     SELECT title, content, url, tag 
     FROM notes 
@@ -103,7 +103,7 @@ export async function getNotesByAssignedTag(tag) {
     return rows;
 }
 
-export async function getNoteWithTagById(id){
+export async function getNoteWithTagById(id) {
     const [row] = await pool.query(`
     SELECT title, content, url, tag 
     FROM notes 
@@ -113,8 +113,8 @@ export async function getNoteWithTagById(id){
     return row[0];
 }
 
-export async function updateTag(tag, id){
-    const [row] = await pool.query(`UPDATE label SET tagid = ? WHERE noteid = ?`, [tag, id])
+export async function updateTag(tag, id) {
+    const [row] = await pool.query(`UPDATE label SET tagid = ? WHERE noteid = ?`, [tag, id]);
 
     return getNoteWithTagById(id);
 
