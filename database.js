@@ -19,7 +19,7 @@ export async function getNoteById(id) {
     const [row] = await pool.query(`
     SELECT *
     FROM notes 
-    WHERE NoteId = ?`, [id]);
+    WHERE noteid = ?`, [id]);
 
     return row[0];
 }
@@ -35,7 +35,7 @@ export async function createNote(title, content, url) {
 
 export async function deleteNote(id) {
     const [note] = await pool.query(`
-    DELETE FROM notes WHERE NoteId = ?`, [id]);
+    DELETE FROM notes WHERE noteid = ?`, [id]);
 }
 
 export async function getAllTags() {
@@ -47,7 +47,7 @@ export async function getTagById(id) {
     const [row] = await pool.query(`
     SELECT *
     FROM tags 
-    WHERE TagId = ?`, [id]);
+    WHERE tagid = ?`, [id]);
 
     return row[0];
 }
@@ -70,3 +70,52 @@ export async function createTag(tag) {
     return getTagById(id);
 }
 
+export async function getAllLabels() {
+    const [rows] = await pool.query(`SELECT * FROM label`);
+    return rows;
+}
+
+export async function createLabel(NoteId, TagId) {
+    const [noteTag] = await pool.query(`
+    INSERT INTO label (noteid, tagid)
+    VALUES (?, ?)`, [NoteId, TagId]);
+
+    return getNoteWithTagById(NoteId);
+}
+
+export async function getAllNotesWithTags() {
+    const [rows] = await pool.query(`
+    SELECT title, content, url, tag 
+    FROM notes 
+    JOIN label ON notes.noteid = label.noteid
+    JOIN tags ON label.tagid = tags.tagid`);
+    return rows;
+}
+
+export async function getNotesByAssignedTag(tag) {
+    const [rows] = await pool.query(`
+    SELECT title, content, url, tag 
+    FROM notes 
+    JOIN label ON notes.noteid = label.noteid
+    JOIN tags ON label.tagid = tags.tagid 
+    WHERE tag = ?`, [tag]);
+
+    return rows;
+}
+
+export async function getNoteWithTagById(id) {
+    const [row] = await pool.query(`
+    SELECT title, content, url, tag 
+    FROM notes 
+    JOIN label ON notes.noteid = label.noteid
+    JOIN tags ON label.tagid = tags.tagid 
+    WHERE notes.NoteId = ?`, [id]);
+    return row[0];
+}
+
+export async function updateTag(tag, id) {
+    const [row] = await pool.query(`UPDATE label SET tagid = ? WHERE noteid = ?`, [tag, id]);
+
+    return getNoteWithTagById(id);
+
+}
