@@ -113,6 +113,17 @@ export async function getNoteWithTagById(id) {
     return row[0];
 }
 
+export async function getTagsOnNote(noteid) {
+    const [rows] = await pool.query(`
+    SELECT tag
+    FROM notes
+    JOIN label ON notes.noteid = label.noteid
+    JOIN tags ON label.tagid = tags.tagid 
+    WHERE notes.noteid = ?`, [noteid]);
+
+    return rows;
+}
+
 export async function updateTag(tag, id) {
     const [row] = await pool.query(`UPDATE label SET tagid = ? WHERE noteid = ?`, [tag, id]);
 
