@@ -30,7 +30,7 @@ app.get("/notes", async (req, res) => {
         if (notes.length === 0) {
             res.status(404).json({ error: "No notes were found" });
         } else {
-            res.status(201).send(notes);
+            res.status(200).send(notes);
         }
     } catch (err) {
         res.status(500).json({ error: err });
@@ -46,7 +46,7 @@ app.get("/notes/:id", async (req, res) => {
         if (note.length === 0) {
             res.status(404).json({ error: `Note with id=${id} not found.` });
         } else {
-            res.status(201).send(note);
+            res.status(200).send(note);
         }
 
     } catch (err) {
@@ -66,7 +66,7 @@ app.get("/notes/:id/tags", async (req, res) => {
         } else if (tags.length === 0) {
             res.status(404).json({ error: `Note with id=${id} has no tags.` });
         } else {
-            res.status(201).send(tags);
+            res.status(200).send(tags);
         }
     } catch (err) {
         res.status(500).json({ error: err });
@@ -91,7 +91,7 @@ app.post("/notes/:id/tags", async (req, res) => {
             if (updatedNote.length === 0) {
                 res.status(404).json({ error: "The tag was not updated" });
             } else {
-                res.status(201).send(updatedNote);
+                res.status(200).send(updatedNote);
             }
         }
     } catch (err) {
@@ -201,7 +201,7 @@ app.get('/tags/:id/notes', async (req, res) => {
         if (notes.length === 0) {
             res.status(404).json({ error: `No notes associated with tag with id=${id}` });
         } else {
-            res.status(201).send(notes);
+            res.status(200).send(notes);
         }
 
     } catch (err) {
@@ -233,7 +233,7 @@ app.delete("/tags/:id", async (req, res) => {
         const tag = await getTagById(id);
 
         if (tag == undefined) {
-            res.status(404).send(`Couldn't delete tag. Requested tag with id=${id} doesn't exist.`);
+            res.status(404).json({ error: `Couldn't delete tag. Requested tag with id=${id} doesn't exist.` });
         } else {
             await deleteTagById(id);
             res.status(200).send(tag);
