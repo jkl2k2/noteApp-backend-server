@@ -21,7 +21,7 @@ export async function getNoteById(id) {
     FROM notes 
     WHERE noteid = ?`, [id]);
 
-    return row[0];
+    return row;
 }
 
 export async function createNote(title, content, url) {
@@ -49,7 +49,7 @@ export async function getTagById(id) {
     FROM tags 
     WHERE tagid = ?`, [id]);
 
-    return row[0];
+    return row;
 }
 
 export async function getTagByName(tag) {
@@ -62,6 +62,7 @@ export async function getTagByName(tag) {
 }
 
 export async function createTag(tag) {
+    console.log(tag);
     const [newTag] = await pool.query(`
     INSERT INTO tags (tag)
     VALUES (?)`, [tag]);
@@ -92,13 +93,13 @@ export async function getAllNotesWithTags() {
     return rows;
 }
 
-export async function getNotesByAssignedTag(tag) {
+export async function getNotesByAssignedTagId(id) {
     const [rows] = await pool.query(`
     SELECT title, content, url, tag 
     FROM notes 
     JOIN label ON notes.noteid = label.noteid
     JOIN tags ON label.tagid = tags.tagid 
-    WHERE tag = ?`, [tag]);
+    WHERE label.tagid = ?`, [id]);
 
     return rows;
 }
@@ -129,4 +130,16 @@ export async function updateTag(tag, id) {
 
     return getNoteWithTagById(id);
 
+}
+
+export async function updateTagName(id, newName) {
+    const [row] = await pool.query(`UPDATE tags SET tag = ? WHERE tagid = ?`, [newName, id]);
+
+    return getTagById(id);
+}
+
+export async function deleteTagById(id) {
+    const [row] = await pool.query(`DELETE FROM tags WHERE tagid = ?`, [id]);
+
+    return row;
 }
