@@ -161,7 +161,7 @@ export async function newUser(firstname, lastname, username, email, password) {
     const [user] = await pool.query('INSERT INTO users (firstname, lastname, username, email, password) VALUES (?, ?, ?, ?, ?)', 
     [firstname, lastname, username, email, password]);
 
-    const id = user.insertId
+    const id = user.insertId;
     return getUsersById(id);
 }
 
