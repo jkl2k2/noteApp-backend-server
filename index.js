@@ -284,7 +284,7 @@ app.get("/label", async (req, res) => {
 //#region  --- /user ROUTES
 
 // Register a new user
-app.post('/register', async (req, res) => {
+app.post('/users', async (req, res) => {
     try {
       const {firstname, lastname, username, email, password } = req.body;
 
@@ -300,9 +300,9 @@ app.post('/register', async (req, res) => {
       // Insert the new user into the database
       const newAccount = await newUser(firstname, lastname, username, email, hashedPassword);
       if (newAccount.length === 0){
-        res.status(401).json({ error: 'Failed to create account' });
+        res.status(500).json({ error: 'Failed to create account' });
       } else {
-        res.status(200).send('You have successfully created your account');
+        res.status(201).send('You have successfully created your account');
       }
     } catch (err) {
         res.status(500).json({ error: err });
@@ -310,9 +310,10 @@ app.post('/register', async (req, res) => {
 });
   
 // Login route
-app.get('/login', async (req, res) => {
+app.get('/users/:username', async (req, res) => {
     try {
-        const { username, password } = req.body;
+        const { username } = req.params;
+        const { password } = req.body;
 
         // Fetch user from database
         const users = await getUsersByUsername(username);
@@ -338,7 +339,7 @@ app.get('/login', async (req, res) => {
 });
 
 // Delete Account route
-app.delete('/user/:id', async (req, res) => {
+app.delete('/users/:id', async (req, res) => {
     try {
         const { id } = req.params;
 
