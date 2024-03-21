@@ -9,7 +9,7 @@ const pool = mysql.createPool({
     database: process.env.MYSQL_DATABASE
 }).promise();
 
-
+// #region
 export async function getAllNotes() {
     const [rows] = await pool.query(`SELECT * FROM notes`);
     return rows;
@@ -141,5 +141,31 @@ export async function updateTagName(id, newName) {
 export async function deleteTagById(id) {
     const [row] = await pool.query(`DELETE FROM tags WHERE tagid = ?`, [id]);
 
+    return row;
+}
+
+// #endregion
+
+export async function getUsersById(id) {
+    const [row] = await pool.query(`SELECT * FROM users WHERE userid = ?`, [id]);
+    return row;
+}
+
+export async function getUsersByUsername(username) {
+    const [row] = await pool.query(`SELECT * FROM users WHERE username = ?`, [username]);
+
+    return row;
+}
+
+export async function newUser(firstname, lastname, username, email, password) {
+    const [user] = await pool.query('INSERT INTO users (firstname, lastname, username, email, password) VALUES (?, ?, ?, ?, ?)', 
+    [firstname, lastname, username, email, password]);
+
+    const id = user.insertId
+    return getUsersById(id);
+}
+
+export async function deleteUser(id) {
+    const [row] = await pool.query('DELETE FROM users WHERE userid = ?', [id]);
     return row;
 }
