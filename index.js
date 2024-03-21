@@ -1,9 +1,28 @@
 import express from 'express';
-import { getNoteById, getAllNotes, createNote, deleteNote, getTagById, getAllTags, getTagByName, createTag, getAllLabels, getNotesByAssignedTag, getAllNotesWithTags, createLabel, updateTag } from './database.js';
+import { getNoteById, getAllNotes, createNote, deleteNote, getTagById, getAllTags, getTagByName, createTag, getAllLabels, getAllNotesWithTags, createLabel, updateTag, getTagsOnNote, updateTagName, deleteTagById, getNotesByAssignedTagId } from './database.js';
 
 const app = express();
 app.use(express.json());
 
+//#region --- /notes ROUTES
+
+// CREATE new note
+app.post("/notes", async (req, res) => {
+    try {
+        const { title, content, url } = req.body;
+        const note = await createNote(title, content, url);
+
+        if (note.length === 0) {
+            res.status(500).json({ error: `Unknown error posting new note with title=${title} linked to url=${url}` });
+        } else {
+            res.status(201).send(note);
+        }
+    } catch (err) {
+        res.status(500).json({ error: err });
+    }
+});
+
+// READ all notes
 app.get("/notes", async (req, res) => {
     try {
         const notes = await getAllNotes();
@@ -11,22 +30,23 @@ app.get("/notes", async (req, res) => {
         if (notes.length === 0) {
             res.status(404).json({ error: "No notes were found" });
         } else {
-            res.status(201).send(notes);
+            res.status(200).send(notes);
         }
     } catch (err) {
         res.status(500).json({ error: err });
     }
 });
 
-app.get("/note/:id", async (req, res) => {
+// READ note by ID
+app.get("/notes/:id", async (req, res) => {
     try {
         const id = req.params.id;
         const note = await getNoteById(id);
 
         if (note.length === 0) {
-            res.status(404).json({ error: "Your notes was not found" });
+            res.status(404).json({ error: `Note with id=${id} not found.` });
         } else {
-            res.status(201).send(note);
+            res.status(200).send(note);
         }
 
     } catch (err) {
@@ -34,31 +54,95 @@ app.get("/note/:id", async (req, res) => {
     }
 });
 
-app.post("/notes", async (req, res) => {
-    try {
-        const { title, content, url } = req.body;
-        const note = await createNote(title, content, url);
-
-        if (note.length === 0) {
-            res.status(404).json({ error: "Your note was not found" });
-        } else {
-            res.status(201).send(note);
-        }
-    } catch (err) {
-        res.status(500).json({ error: err });
-    }
-});
-
-app.delete("/note/:id", async (req, res) => {
+// READ all tags associated with a note
+app.get("/notes/:id/tags", async (req, res) => {
     try {
         const { id } = req.params;
-        const note = await deleteNote(id);
-        res.status(201).send(note);
+        const notes = await getNoteById(id);
+        const tags = await getTagsOnNote(id);
+
+        if (notes.length === 0) {
+            res.status(404).json({ error: `Note with id=${id} not found.` });
+        } else if (tags.length === 0) {
+            res.status(404).json({ error: `Note with id=${id} has no tags.` });
+        } else {
+            res.status(200).send(tags);
+        }
     } catch (err) {
         res.status(500).json({ error: err });
     }
 });
 
+// UPDATE a note's tags by name IN THE BODY
+app.post("/notes/:id/tags", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name } = req.body;
+        const tagLookup = await getTagByName(name);
+        const noteLookup = await getNoteById(id);
+
+        if (tagLookup.length === 0) {
+            res.status(404).json({ error: `Tag with name=${name} not found.` });
+        } else if (noteLookup.length === 0) {
+            res.status(404).json({ error: `Note with id=${id} not found.` });
+        } else {
+            const updatedNote = await createLabel(id, tagLookup[0].tagid);
+
+            if (updatedNote.length === 0) {
+                res.status(404).json({ error: "The tag was not updated" });
+            } else {
+                res.status(200).send(updatedNote);
+            }
+        }
+    } catch (err) {
+        res.status(500).json({ error: err });
+    }
+});
+
+// DELETE note by ID
+app.delete("/notes/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const note = await getNoteById(id);
+
+        if (note == undefined) {
+            res.status(404).send(`Couldn't delete. Requested note with id=${id} not found.`);
+        } else {
+            await deleteNote(id);
+            res.status(200).send(note);
+        }
+    } catch (err) {
+        res.status(500).json({ error: err });
+    }
+});
+
+//#endregion
+
+//#region --- /tags ROUTES
+
+// CREATE new tag using the body
+app.post("/tags", async (req, res) => {
+    try {
+        const { name } = req.body;
+        const tagLookup = await getTagByName(name);
+
+        if (tagLookup.length !== 0) {
+            res.status(400).json({ error: `Tag with name=${name} already exists.` });
+        }
+
+        const newTag = await createTag(name);
+
+        if (newTag.length === 0) {
+            res.status(404).json({ error: `Failed to create tag with name=${name}` });
+        } else {
+            res.status(201).send(newTag);
+        }
+    } catch (err) {
+        res.status(500).json({ error: err });
+    }
+});
+
+// READ all tags
 app.get("/tags", async (req, res) => {
     try {
         const tags = await getAllTags();
@@ -66,22 +150,24 @@ app.get("/tags", async (req, res) => {
         if (tags.length === 0) {
             res.status(404).json({ error: "No tags were found" });
         } else {
-            res.status(201).send(tags);
+            res.status(200).send(tags);
         }
     } catch (err) {
         res.status(500).json({ error: err });
     }
 });
 
-app.get("/tag/:id", async (req, res) => {
+
+// READ tag by ID
+app.get("/tags/:id", async (req, res) => {
     try {
-        const id = req.params.id;
+        const { id } = req.params;
         const tag = await getTagById(id);
 
         if (tag.length === 0) {
-            res.status(404).json({ error: "No tag was not found" });
+            res.status(404).json({ error: `Requested tag with id=${id} not found` });
         } else {
-            res.status(201).send(tag);
+            res.status(200).send(tag);
         }
 
     } catch (err) {
@@ -89,15 +175,16 @@ app.get("/tag/:id", async (req, res) => {
     }
 });
 
-app.get("/lookuptag/:tag", async (req, res) => {
+// READ tag by name
+app.get("/tags/name/:name", async (req, res) => {
     try {
-        const tag = req.params.tag;
-        const lookedupTag = await getTagByName(tag);
+        const { name } = req.params;
+        const lookedupTag = await getTagByName(name);
 
         if (lookedupTag.length === 0) {
-            res.status(404).json({ error: "Your tag was not found" });
+            res.status(404).json({ error: `Your tag was not found with parameters name=${name}` });
         } else {
-            res.status(201).send(lookedupTag);
+            res.status(200).send(lookedupTag);
         }
 
     } catch (err) {
@@ -105,36 +192,63 @@ app.get("/lookuptag/:tag", async (req, res) => {
     }
 });
 
-app.post("/tags", async (req, res) => {
+// READ all notes associated with a tag id
+app.get('/tags/:id/notes', async (req, res) => {
     try {
-        const { tag } = req.body;
-        const newtag = await createTag(tag);
+        const { id } = req.params;
+        const notes = await getNotesByAssignedTagId(id);
 
-        if (newtag.length === 0) {
-            res.status(404).json({ error: "No tag was created" });
+        if (notes.length === 0) {
+            res.status(404).json({ error: `No notes associated with tag with id=${id}` });
         } else {
-            res.status(201).send(newtag);
+            res.status(200).send(notes);
         }
+
     } catch (err) {
         res.status(500).json({ error: err });
     }
 });
 
-app.get("/labels", async (req, res) => {
+// UPDATE tag by id
+app.post("/tags/:id", async (req, res) => {
     try {
-        const label = await getAllLabels();
+        const { id } = req.params;
+        const { name } = req.body;
+        const newTag = await updateTagName(id, name);
 
-        if (label.length === 0) {
-            res.status(404).json({ error: "No notes with that tag  were found" });
+        if (newTag.length === 0) {
+            res.status(404).json({ error: `Tag with id=${id} failed to update` });
         } else {
-            res.status(201).send(label);
+            res.status(200).send(newTag);
         }
     } catch (err) {
         res.status(500).json({ error: err });
     }
 });
 
-app.post("/newlabel", async (req, res) => {
+// DELETE tag by id
+app.delete("/tags/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const tag = await getTagById(id);
+
+        if (tag == undefined) {
+            res.status(404).json({ error: `Couldn't delete tag. Requested tag with id=${id} doesn't exist.` });
+        } else {
+            await deleteTagById(id);
+            res.status(200).send(tag);
+        }
+    } catch (err) {
+        res.status(500).json({ error: err });
+    }
+});
+
+//#endregion
+
+//#region --- /label ROUTES
+
+// CREATE new label relationship
+app.post("/label", async (req, res) => {
     try {
         const { NoteId, TagId } = req.body;
         const newtag = await createLabel(NoteId, TagId);
@@ -149,96 +263,22 @@ app.post("/newlabel", async (req, res) => {
     }
 });
 
-app.get("/NotesandTags", async (req, res) => {
+// READ all label relationships
+app.get("/label", async (req, res) => {
     try {
-        const NotesandTags = await getAllNotesWithTags();
+        const label = await getAllLabels();
 
-        if (NotesandTags.length === 0) {
-            res.status(404).json({ error: "No notes and tags were found" });
+        if (label.length === 0) {
+            res.status(404).json({ error: "No notes with tags were found" });
         } else {
-            res.status(201).send(NotesandTags);
+            res.status(201).send(label);
         }
     } catch (err) {
         res.status(500).json({ error: err });
     }
 });
 
-app.get('/note/tag/:tag', async (req, res) => {
-    try {
-        const tag = req.params.tag;
-        const notes = await getNotesByAssignedTag(tag);
-
-        if (notes.length === 0) {
-            res.status(404).json({ error: "No tags were found" });
-        } else {
-            res.status(201).send(notes);
-        }
-
-    } catch (err) {
-        res.status(500).json({ error: err });
-    }
-});
-
-app.post("/addTagToNote", async (req, res) => {
-    try {
-        const { title, content, url, tag } = req.body;
-
-        const lookedupTag = await getTagByName(tag);
-
-        if (lookedupTag.length === 0) {
-            const newtag = await createTag(tag);
-            const note = await createNote(title, content, url);
-            const newNote = await createLabel(note.noteid, newtag.tagid);
-
-            if (newNote.length === 0) {
-                res.status(404).json({ error: "Your Note and tag was not found" });
-            } else {
-                res.status(201).send(newNote);
-            }
-        } else {
-            const note = await createNote(title, content, url);
-            const newNote = await createLabel(note.noteid, lookedupTag[0].tagid);
-
-            if (newNote.length === 0) {
-                res.status(404).json({ error: "Your note and tag was not found" });
-            } else {
-                res.status(201).send(newNote);
-            }
-        }
-    } catch (err) {
-        res.status(500).json({ error: err });
-    }
-});
-
-app.post("/updateNote/:id", async (req, res) => {
-    try {
-        const id = req.params.id;
-        const { tag } = req.body;
-        const lookup = await getTagByName(tag);
-
-        if (lookup.length === 0) {
-            const newtag = await createTag(tag);
-            const updatedNote = await updateTag(newtag.tagid, id);
-
-            if (updatedNote.length === 0) {
-                res.status(404).json({ error: "The tag was not updated" });
-            } else {
-                res.status(201).send(updatedNote);
-            }
-        } else {
-
-            const updatedNote = await updateTag(lookup[0].tagid, id);
-
-            if (updatedNote.length === 0) {
-                res.status(404).json({ error: "The tag was not updated" });
-            } else {
-                res.status(201).send(updatedNote);
-            }
-        }
-    } catch (err) {
-        res.status(500).json({ error: err });
-    }
-});
+//#endregion
 
 app.use((err, req, res, next) => {
     console.error(err.stack);
