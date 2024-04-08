@@ -310,7 +310,7 @@ app.post('/users', async (req, res) => {
 });
   
 // Login route
-app.get('/users/:username', async (req, res) => {
+app.post('/users/:username', async (req, res) => {
     try {
         const { username } = req.params;
         const { password } = req.body;
