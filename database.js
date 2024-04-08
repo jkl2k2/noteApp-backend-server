@@ -10,8 +10,13 @@ const pool = mysql.createPool({
 }).promise();
 
 // #region
-export async function getAllNotes() {
-    const [rows] = await pool.query(`SELECT * FROM notes`);
+export async function getAllUserNotes(id) {
+    const connection = await pool.getConnection();
+    const [rows] = await connection.query(`
+    SELECT title, content, url 
+    FROM notes
+    WHERE userid = ?`, [id]);
+    connection.release();
     return rows;
 }
 
@@ -24,10 +29,12 @@ export async function getNoteById(id) {
     return row;
 }
 
-export async function createNote(title, content, url) {
-    const [newNote] = await pool.query(`
-    INSERT INTO notes (title, content, url)
-    VALUES (?, ?, ?)`, [title, content, url]);
+export async function createNote(userid, title, content, url) {
+    const connection = await pool.getConnection();
+    const [newNote] = await connection.query(`
+    INSERT INTO notes (userid, title, content, url)
+    VALUES (?, ?, ?, ?)`, [userid, title, content, url]);
+    connection.release();
 
     const id = newNote.insertId;
     return getNoteById(id);

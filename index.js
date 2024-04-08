@@ -1,6 +1,6 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
-import { getNoteById, getAllNotes, createNote, deleteNote, getTagById, getAllTags, getTagByName, createTag, getAllLabels, getAllNotesWithTags, createLabel, updateTag, getTagsOnNote, updateTagName, deleteTagById, getNotesByAssignedTagId, getUsersById, getUsersByUsername, newUser, deleteUser } from './database.js';
+import { getNoteById, createNote, deleteNote, getTagById, getAllTags, getTagByName, createTag, getAllLabels, getAllNotesWithTags, createLabel, updateTag, getTagsOnNote, updateTagName, deleteTagById, getNotesByAssignedTagId, getUsersById, getUsersByUsername, newUser, deleteUser, getAllUserNotes} from './database.js';
 
 const app = express();
 app.use(express.json());
@@ -8,10 +8,11 @@ app.use(express.json());
 //#region --- /notes ROUTES
 
 // CREATE new note
+//Updated Route
 app.post("/notes", async (req, res) => {
     try {
-        const { title, content, url } = req.body;
-        const note = await createNote(title, content, url);
+        const { userid, title, content, url } = req.body;
+        const note = await createNote(userid, title, content, url);
 
         if (note.length === 0) {
             res.status(500).json({ error: `Unknown error posting new note with title=${title} linked to url=${url}` });
@@ -24,9 +25,11 @@ app.post("/notes", async (req, res) => {
 });
 
 // READ all notes
-app.get("/notes", async (req, res) => {
+//Updated Route
+app.get("/notes/:id/users", async (req, res) => {
     try {
-        const notes = await getAllNotes();
+        const { id } = req.params;
+        const notes = await getAllUserNotes(id);
 
         if (notes.length === 0) {
             res.status(404).json({ error: "No notes were found" });
