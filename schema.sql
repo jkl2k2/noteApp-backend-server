@@ -22,6 +22,19 @@ CREATE TABLE label (
     CONSTRAINT ID2 FOREIGN KEY (tagid) REFERENCES  tags(tagid) ON DELETE CASCADE
 );
 
+CREATE TABLE users (
+    userid INTEGER PRIMARY KEY AUTO_INCREMENT,
+    firstname VARCHAR(50) NOT NULL,
+    lastname VARCHAR(50) NOT NULL,
+    username VARCHAR(250) NOT NULL UNIQUE,
+    email VARCHAR(50) NOT NULL,
+    password VARCHAR(500) NOT NULL
+);
+
+INSERT INTO users (firstname, lastname, username, email, password) VALUES 
+('testUser', 'testUser', 'testuser1', 'testUser@gmail.com', 'testuser1'),
+('adminUser', 'adminUser', 'Admin', 'adminUser@gmail.com', 'Admin');
+
 INSERT INTO notes (title, content, url) VALUES
 ('NEW YORK TIMES', '(Some text from the New York Times)', 'https://www.nytimes.com/'),
 ('FORBES', '(Some text from a Forbes article)', 'https://www.forbes.com/sites/forbesfinancecouncil/2023/07/03/the-power-of-a-teamwork-culture-maximizing-your-strengths/?sh=43024c6c11e1');

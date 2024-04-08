@@ -1,5 +1,6 @@
 import express from 'express';
-import { getNoteById, getAllNotes, createNote, deleteNote, getTagById, getAllTags, getTagByName, createTag, getAllLabels, getAllNotesWithTags, createLabel, updateTag, getTagsOnNote, updateTagName, deleteTagById, getNotesByAssignedTagId } from './database.js';
+import bcrypt from 'bcrypt';
+import { getNoteById, getAllNotes, createNote, deleteNote, getTagById, getAllTags, getTagByName, createTag, getAllLabels, getAllNotesWithTags, createLabel, updateTag, getTagsOnNote, updateTagName, deleteTagById, getNotesByAssignedTagId, getUsersById, getUsersByUsername, newUser, deleteUser } from './database.js';
 
 const app = express();
 app.use(express.json());
@@ -278,6 +279,85 @@ app.get("/label", async (req, res) => {
     }
 });
 
+//#endregion
+
+//#region  --- /user ROUTES
+
+// Register a new user
+app.post('/users', async (req, res) => {
+    try {
+      const {firstname, lastname, username, email, password } = req.body;
+
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Check if user already exists
+      const user = await getUsersByUsername(username);
+      if (user.length !== 0) {
+        return res.status(401).send('Username or email already exists');
+      }
+
+      // Insert the new user into the database
+      const newAccount = await newUser(firstname, lastname, username, email, hashedPassword);
+      if (newAccount.length === 0){
+        res.status(500).json({ error: 'Failed to create account' });
+      } else {
+        res.status(201).send('You have successfully created your account');
+      }
+    } catch (err) {
+        res.status(500).json({ error: err });
+    }
+});
+  
+// Login route
+app.post('/users/:username', async (req, res) => {
+    try {
+        const { username } = req.params;
+        const { password } = req.body;
+
+        // Fetch user from database
+        const users = await getUsersByUsername(username);
+      
+
+        // Check if user exists
+        if (users.length === 0) {
+            return res.status(401).json({ error: 'Invalid username or password' });
+        }
+    
+        // Verify password
+        const user = users[0];
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        if (!passwordMatch) {
+            return res.status(401).json({ error: 'Invalid username or password' });
+        }
+    
+        // Successful login
+        res.json({ message: 'Login successful', user: { username: user.username } });
+    } catch (err) {
+        res.status(500).json({ error: err });
+    }
+});
+
+// Delete Account route
+app.delete('/users/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        //Fetch user from database
+        const user = await getUsersById(id);
+
+        // Checks if user exists if it does the user will be deleted
+        if (user == undefined) {
+            res.status(404).send(`Couldn't delete user. Requested user with id=${id} doesn't exist.`);
+        } else {
+            await deleteUser(id);
+            res.status(200).send(user);
+        }
+    } catch (err) {
+        res.status(500).json({ error: err });
+    }
+    });
+    
 //#endregion
 
 app.use((err, req, res, next) => {
