@@ -1,6 +1,6 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
-import { getNoteById, createNote, deleteNote, getTagById, getAllTags, createTag, getAllLabels, createLabel, getTagsOnNote, updateTagName, deleteTagById, getNotesByAssignedTagId, getUsersById, getUsersByUsername, newUser, deleteUser, getAllUserNotes, getAllNotes, getAllUserTags, getUserTagByName } from './database.js';
+import { getNoteById, createNote, deleteNote, getTagById, getAllTags, createTag, getAllLabels, createLabel, getTagsOnNote, updateTagName, deleteTagById, getNotesByAssignedTagId, getUsersById, getUsersByUsername, newUser, deleteUser, getAllUserNotes, getAllNotes, getAllUserTags, getUserTagByName, getTagByName } from './database.js';
 
 const app = express();
 app.use(express.json());
