@@ -22,7 +22,9 @@ CREATE TABLE notes (
 
 CREATE TABLE tags (
     tagid INT PRIMARY KEY AUTO_INCREMENT,
-    tag VARCHAR(250) NOT NULL  
+    userid INT NOT NULL,
+    tag VARCHAR(250) NOT NULL
+    CONSTRAINT ID4 FOREIGN KEY (userid) REFERENCES users(userid) on DELETE CASCADE
 );
 
 CREATE TABLE label (
@@ -41,9 +43,9 @@ INSERT INTO notes (userid, title, content, url) VALUES
 (1, 'NEW YORK TIMES', '(Some text from the New York Times)', 'https://www.nytimes.com/'),
 (2, 'FORBES', '(Some text from a Forbes article)', 'https://www.forbes.com/sites/forbesfinancecouncil/2023/07/03/the-power-of-a-teamwork-culture-maximizing-your-strengths/?sh=43024c6c11e1');
 
-INSERT INTO tags (tag) VALUES
-('Research'),
-('School');
+INSERT INTO tags (userid, tag) VALUES
+(1, 'Research'),
+(2, 'School');
 
 INSERT INTO label (noteid, tagid) VALUES 
 (1, 1),
