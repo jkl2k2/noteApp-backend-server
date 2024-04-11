@@ -1,6 +1,6 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
-import { getNoteById, createNote, deleteNote, getTagById, getAllTags, getTagByName, createTag, getAllLabels, getAllNotesWithTags, createLabel, updateTag, getTagsOnNote, updateTagName, deleteTagById, getNotesByAssignedTagId, getUsersById, getUsersByUsername, newUser, deleteUser, getAllUserNotes} from './database.js';
+import { getNoteById, createNote, deleteNote, getTagById, getAllTags, createTag, getAllLabels, createLabel, getTagsOnNote, updateTagName, deleteTagById, getNotesByAssignedTagId, getUsersById, getUsersByUsername, newUser, deleteUser, getAllUserNotes, getAllNotes, getAllUserTags, getUserTagByName } from './database.js';
 
 const app = express();
 app.use(express.json());
@@ -8,7 +8,6 @@ app.use(express.json());
 //#region --- /notes ROUTES
 
 // CREATE new note
-//Updated Route
 app.post("/notes", async (req, res) => {
     try {
         const { userid, title, content, url } = req.body;
@@ -24,12 +23,16 @@ app.post("/notes", async (req, res) => {
     }
 });
 
-// READ all notes
-//Updated Route
-app.get("/notes/:id/users", async (req, res) => {
+// READ all of a user's notes
+app.get("/notes", async (req, res) => {
     try {
-        const { id } = req.params;
-        const notes = await getAllUserNotes(id);
+        let notes;
+
+        if (req.query.userid) {
+            notes = await getAllUserNotes(req.query.userid);
+        } else {
+            notes = await getAllNotes();
+        }
 
         if (notes.length === 0) {
             res.status(404).json({ error: "No notes were found" });
@@ -44,11 +47,11 @@ app.get("/notes/:id/users", async (req, res) => {
 // READ note by ID
 app.get("/notes/:id", async (req, res) => {
     try {
-        const id = req.params.id;
-        const note = await getNoteById(id);
+        const noteID = req.params.id;
+        const note = await getNoteById(noteID);
 
         if (note.length === 0) {
-            res.status(404).json({ error: `Note with id=${id} not found.` });
+            res.status(404).json({ error: `Note with noteid=${noteID} not found.` });
         } else {
             res.status(200).send(note);
         }
@@ -127,14 +130,14 @@ app.delete("/notes/:id", async (req, res) => {
 // CREATE new tag using the body
 app.post("/tags", async (req, res) => {
     try {
-        const { name } = req.body;
-        const tagLookup = await getTagByName(name);
+        const { userid, name } = req.body;
+        const tagLookup = await getUserTagByName(userid, name);
 
         if (tagLookup.length !== 0) {
             res.status(400).json({ error: `Tag with name=${name} already exists.` });
         }
 
-        const newTag = await createTag(name);
+        const newTag = await createTag(userid, name);
 
         if (newTag.length === 0) {
             res.status(404).json({ error: `Failed to create tag with name=${name}` });
@@ -146,10 +149,20 @@ app.post("/tags", async (req, res) => {
     }
 });
 
-// READ all tags
+// READ either all tags, all of a user's tags, or a user's tag by name
 app.get("/tags", async (req, res) => {
     try {
-        const tags = await getAllTags();
+        let tags;
+
+        if (req.query.userid) {
+            if (req.query.name) {
+                tags = await getUserTagByName(req.query.userid, req.query.name);
+            } else {
+                tags = await getAllUserTags(req.query.userid);
+            }
+        } else {
+            tags = await getAllTags();
+        }
 
         if (tags.length === 0) {
             res.status(404).json({ error: "No tags were found" });
@@ -172,23 +185,6 @@ app.get("/tags/:id", async (req, res) => {
             res.status(404).json({ error: `Requested tag with id=${id} not found` });
         } else {
             res.status(200).send(tag);
-        }
-
-    } catch (err) {
-        res.status(500).json({ error: err });
-    }
-});
-
-// READ tag by name
-app.get("/tags/name/:name", async (req, res) => {
-    try {
-        const { name } = req.params;
-        const lookedupTag = await getTagByName(name);
-
-        if (lookedupTag.length === 0) {
-            res.status(404).json({ error: `Your tag was not found with parameters name=${name}` });
-        } else {
-            res.status(200).send(lookedupTag);
         }
 
     } catch (err) {
@@ -254,8 +250,8 @@ app.delete("/tags/:id", async (req, res) => {
 // CREATE new label relationship
 app.post("/label", async (req, res) => {
     try {
-        const { NoteId, TagId } = req.body;
-        const newtag = await createLabel(NoteId, TagId);
+        const { noteid, tagid } = req.body;
+        const newtag = await createLabel(noteid, tagid);
 
         if (newtag.length === 0) {
             res.status(404).json({ error: "Your tag was not created" });
@@ -289,29 +285,29 @@ app.get("/label", async (req, res) => {
 // Register a new user
 app.post('/users', async (req, res) => {
     try {
-      const {firstname, lastname, username, email, password } = req.body;
+        const { firstname, lastname, username, email, password } = req.body;
 
-      // Hash the password
-      const hashedPassword = await bcrypt.hash(password, 10);
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Check if user already exists
-      const user = await getUsersByUsername(username);
-      if (user.length !== 0) {
-        return res.status(401).send('Username or email already exists');
-      }
+        // Check if user already exists
+        const user = await getUsersByUsername(username);
+        if (user.length !== 0) {
+            return res.status(401).send('Username or email already exists');
+        }
 
-      // Insert the new user into the database
-      const newAccount = await newUser(firstname, lastname, username, email, hashedPassword);
-      if (newAccount.length === 0){
-        res.status(500).json({ error: 'Failed to create account' });
-      } else {
-        res.status(201).send('You have successfully created your account');
-      }
+        // Insert the new user into the database
+        const newAccount = await newUser(firstname, lastname, username, email, hashedPassword);
+        if (newAccount.length === 0) {
+            res.status(500).json({ error: 'Failed to create account' });
+        } else {
+            res.status(201).send('You have successfully created your account');
+        }
     } catch (err) {
         res.status(500).json({ error: err });
     }
 });
-  
+
 // Login route
 app.post('/users/:username', async (req, res) => {
     try {
@@ -320,20 +316,20 @@ app.post('/users/:username', async (req, res) => {
 
         // Fetch user from database
         const users = await getUsersByUsername(username);
-      
+
 
         // Check if user exists
         if (users.length === 0) {
             return res.status(401).json({ error: 'Invalid username or password' });
         }
-    
+
         // Verify password
         const user = users[0];
         const passwordMatch = await bcrypt.compare(password, user.password);
         if (!passwordMatch) {
             return res.status(401).json({ error: 'Invalid username or password' });
         }
-    
+
         // Successful login
         res.json({ message: 'Login successful', user: { username: user.username } });
     } catch (err) {
@@ -359,8 +355,8 @@ app.delete('/users/:id', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err });
     }
-    });
-    
+});
+
 //#endregion
 
 app.use((err, req, res, next) => {
