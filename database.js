@@ -10,21 +10,40 @@ const pool = mysql.createPool({
 }).promise();
 
 // #region
+export async function getAllNotes() {
+    const connection = await pool.getConnection();
+    const [rows] = await connection.query(`
+    SELECT *
+    FROM notes`);
+    connection.release();
+    return rows;
+}
+
 export async function getAllUserNotes(id) {
     const connection = await pool.getConnection();
     const [rows] = await connection.query(`
-    SELECT title, content, url 
+    SELECT *
     FROM notes
     WHERE userid = ?`, [id]);
     connection.release();
     return rows;
 }
 
-export async function getNoteById(id) {
+export async function getNoteById(noteID) {
     const [row] = await pool.query(`
     SELECT *
     FROM notes 
-    WHERE noteid = ?`, [id]);
+    WHERE noteid = ?`, [noteID]);
+
+    return row;
+}
+
+export async function getUserNoteById(userID, noteID) {
+    const [row] = await pool.query(`
+    SELECT *
+    FROM notes 
+    WHERE noteid = ?
+    AND userid = ?`, [noteID, userID]);
 
     return row;
 }
@@ -50,11 +69,19 @@ export async function getAllTags() {
     return rows;
 }
 
-export async function getTagById(id) {
-    const [row] = await pool.query(`
+export async function getAllUserTags(userid) {
+    const [rows] = await pool.query(`
     SELECT *
-    FROM tags 
-    WHERE tagid = ?`, [id]);
+    FROM tags
+    WHERE userid = ?`, [userid]);
+    return rows;
+}
+
+export async function getUserTagByName(userid, tag) {
+    const [row] = await pool.query(`
+    SELECT * FROM tags
+    WHERE userid = ?
+    AND tag = ?`, [userid, tag]);
 
     return row;
 }
@@ -68,11 +95,19 @@ export async function getTagByName(tag) {
     return row;
 }
 
-export async function createTag(tag) {
-    console.log(tag);
+export async function getTagById(id) {
+    const [row] = await pool.query(`
+    SELECT *
+    FROM tags 
+    WHERE tagid = ?`, [id]);
+
+    return row;
+}
+
+export async function createTag(userid, tag) {
     const [newTag] = await pool.query(`
-    INSERT INTO tags (tag)
-    VALUES (?)`, [tag]);
+    INSERT INTO tags (userid, tag)
+    VALUES (?, ?)`, [userid, tag]);
 
     const id = newTag.insertId;
     return getTagById(id);
@@ -165,8 +200,8 @@ export async function getUsersByUsername(username) {
 }
 
 export async function newUser(firstname, lastname, username, email, password) {
-    const [user] = await pool.query('INSERT INTO users (firstname, lastname, username, email, password) VALUES (?, ?, ?, ?, ?)', 
-    [firstname, lastname, username, email, password]);
+    const [user] = await pool.query('INSERT INTO users (firstname, lastname, username, email, password) VALUES (?, ?, ?, ?, ?)',
+        [firstname, lastname, username, email, password]);
 
     const id = user.insertId;
     return getUsersById(id);
