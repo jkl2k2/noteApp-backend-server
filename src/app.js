@@ -1,6 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
-require('./database.cjs')();
+require('./database.js')();
 
 const app = express();
 app.use(express.json());
@@ -365,5 +365,4 @@ app.use((err, req, res, next) => {
     res.status(500).send('Something broke!');
 });
 
-// export default app;
 module.exports = app;

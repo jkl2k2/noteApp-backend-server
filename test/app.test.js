@@ -1,5 +1,5 @@
 const request = require('supertest');
-const app = require('../src/app.cjs');
+const app = require('../src/app');
 const mysql = require('mysql2');
 
 let pool;

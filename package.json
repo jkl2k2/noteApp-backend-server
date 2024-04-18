@@ -2,7 +2,6 @@
   "name": "express2",
   "version": "1.0.0",
   "description": "",
-  "type": "module",
   "main": "src/server.js",
   "scripts": {
     "dev": "npx nodemon app.js",
