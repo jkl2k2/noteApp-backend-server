@@ -1,6 +1,5 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
-// const { getNoteById, createNote, deleteNote, getTagById, getAllTags, createTag, getAllLabels, createLabel, getTagsOnNote, updateTagName, deleteTagById, getNotesByAssignedTagId, getUsersById, getUsersByUsername, newUser, deleteUser, getAllUserNotes, getAllNotes, getAllUserTags, getUserTagByName, getTagByName } = require('./database.cjs');
 require('./database.cjs')();
 
 const app = express();
