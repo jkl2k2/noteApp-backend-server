@@ -2,7 +2,6 @@ const request = require('supertest');
 const app = require('../src/app');
 const mysql = require('mysql2');
 
-let pool;
 
 beforeAll(() => {
     pool = mysql.createPool({
@@ -11,8 +10,6 @@ beforeAll(() => {
         password: process.env.MYSQL_PASSWORD,
         database: process.env.MYSQL_DATABASE
     }).promise();
-
-    return pool;
 });
 
 describe("POST /notes", () => {
@@ -36,6 +33,4 @@ describe("GET /notes", () => {
         const { statusCode } = await request(app).get('/notes');
         expect(statusCode).toBe(200);
     });
-
-
 });
