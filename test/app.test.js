@@ -1,15 +1,9 @@
 const request = require('supertest');
-const app = require('../src/app');
-const mysql = require('mysql2');
-
+const { app } = require('../src/app');
+const { initTestDB } = require('./app.init');
 
 beforeAll(() => {
-    pool = mysql.createPool({
-        host: process.env.MYSQL_HOST,
-        user: process.env.MYSQL_USER,
-        password: process.env.MYSQL_PASSWORD,
-        database: process.env.MYSQL_DATABASE
-    }).promise();
+    return initTestDB();
 });
 
 describe("POST /notes", () => {
