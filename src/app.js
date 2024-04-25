@@ -366,10 +366,5 @@ app.use((err, req, res, next) => {
 });
 
 module.exports = {
-    app: app,
-
-    enableTesting: () => {
-        setTestingState(true);
-        testingEnabled = true;
-    }
+    app: app
 };

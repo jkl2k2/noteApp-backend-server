@@ -1,9 +1,9 @@
-const app = require('../src/app');
 const mysql = require('mysql2');
 const fs = require('fs');
+require('../src/database')();
 
 const initTestDB = () => {
-    app.enableTesting();
+    useTestDB(true);
 
     const pool = mysql.createPool({
         host: process.env.MYSQL_HOST,
