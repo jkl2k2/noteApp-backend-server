@@ -1,6 +1,9 @@
-const app = require('./app');
+const { app } = require('./app');
+require('../src/database')();
 
 app.listen(8080, () => {
+    useTestDB(false);
+
     console.log('\x1b[36m%s\x1b[0m', `
 ┌────────────────────────────────┐
 │                                │
