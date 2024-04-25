@@ -2,14 +2,34 @@ const mysql = require('mysql2');
 const dotenv = require('dotenv');
 dotenv.config();
 
-const pool = mysql.createPool({
-    host: process.env.MYSQL_HOST,
-    user: process.env.MYSQL_USER,
-    password: process.env.MYSQL_PASSWORD,
-    database: process.env.MYSQL_DATABASE
-}).promise();
+let pool;
+
+function useTestDB(useTest) {
+    let database;
+
+    if (useTest) {
+        database = process.env.MYSQL_TEST_DATABASE;
+    } else {
+        database = process.env.MYSQL_DATABASE;
+    }
+
+    pool = mysql.createPool({
+        host: process.env.MYSQL_HOST,
+        user: process.env.MYSQL_USER,
+        password: process.env.MYSQL_PASSWORD,
+        database: database
+    }).promise();
+}
 
 module.exports = function () {
+    this.setTestingState = function setTestingState(useTest) {
+        if (useTest == true) {
+            useTestDB(true);
+        } else {
+            useTestDB(false);
+        }
+    };
+
     this.getAllNotes = async function getAllNotes() {
         const connection = await pool.getConnection();
         const [rows] = await connection.query(`
