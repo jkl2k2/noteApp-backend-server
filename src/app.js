@@ -365,4 +365,11 @@ app.use((err, req, res, next) => {
     res.status(500).send('Something broke!');
 });
 
-module.exports = app;
+module.exports = {
+    app: app,
+
+    enableTesting: () => {
+        setTestingState(true);
+        testingEnabled = true;
+    }
+};
