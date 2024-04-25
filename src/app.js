@@ -1,6 +1,6 @@
-import express from 'express';
-import bcrypt from 'bcrypt';
-import { getNoteById, createNote, deleteNote, getTagById, getAllTags, createTag, getAllLabels, createLabel, getTagsOnNote, updateTagName, deleteTagById, getNotesByAssignedTagId, getUsersById, getUsersByUsername, newUser, deleteUser, getAllUserNotes, getAllNotes, getAllUserTags, getUserTagByName, getTagByName } from './database.js';
+const express = require('express');
+const bcrypt = require('bcrypt');
+require('./database.js')();
 
 const app = express();
 app.use(express.json());
@@ -14,11 +14,12 @@ app.post("/notes", async (req, res) => {
         const note = await createNote(userid, title, content, url);
 
         if (note.length === 0) {
-            res.status(500).json({ error: `Unknown error posting new note with title=${title} linked to url=${url}` });
+            res.status(201).json({ error: `Unknown error posting new note with title=${title} linked to url=${url}` });
         } else {
             res.status(201).send(note);
         }
     } catch (err) {
+        console.log(err);
         res.status(500).json({ error: err });
     }
 });
@@ -364,6 +365,4 @@ app.use((err, req, res, next) => {
     res.status(500).send('Something broke!');
 });
 
-app.listen(8080, () => {
-    console.log('Server is running on port 8080');
-});
+module.exports = app;
