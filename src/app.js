@@ -1,20 +1,32 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
+const cron =  require('node-cron');
 require('./database.js')();
 
 const app = express();
 app.use(express.json());
+
+app.use((req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader('Access-Control-Allow-Methods', 'DELETE');
+    res.header(
+      "Access-Control-Allow-Headers",
+      "Origin, X-Requested-With, Content-Type, Accept"
+    );
+    next();
+});
 
 //#region --- /notes ROUTES
 
 // CREATE new note
 app.post("/notes", async (req, res) => {
     try {
-        const { userid, title, content, url } = req.body;
-        const note = await createNote(userid, title, content, url);
+
+        const { userid, title, content, url, is_deleted, date} = req.body;
+        const note = await createNote(userid, title, content, url, is_deleted, date);
 
         if (note.length === 0) {
-            res.status(201).json({ error: `Unknown error posting new note with title=${title} linked to url=${url}` });
+            res.status(500).json({ error: `Unknown error posting new note with title=${title} linked to url=${url}` });
         } else {
             res.status(201).send(note);
         }
@@ -29,8 +41,8 @@ app.get("/notes", async (req, res) => {
     try {
         let notes;
 
-        if (req.query.userid) {
-            notes = await getAllUserNotes(req.query.userid);
+        if(req.query.userid && req.query.is_deleted){
+            notes = await getAllUserNotes(req.query.userid, req.query.is_deleted);
         } else {
             notes = await getAllNotes();
         }
@@ -108,15 +120,16 @@ app.post("/notes/:id/tags", async (req, res) => {
 });
 
 // DELETE note by ID
-app.delete("/notes/:id", async (req, res) => {
+app.post("/notes/:id", async (req, res) => {
     try {
         const { id } = req.params;
+        const { is_deleted, date_deleted } = req.body;
         const note = await getNoteById(id);
 
         if (note == undefined) {
             res.status(404).send(`Couldn't delete. Requested note with id=${id} not found.`);
         } else {
-            await deleteNote(id);
+            await softdeleteNote(is_deleted, date_deleted, id);
             res.status(200).send(note);
         }
     } catch (err) {
@@ -332,7 +345,7 @@ app.post('/users/:username', async (req, res) => {
         }
 
         // Successful login
-        res.json({ message: 'Login successful', user: { username: user.username } });
+        res.json({ message: 'Login successful', user: { user: user.userid } });
     } catch (err) {
         res.status(500).json({ error: err });
     }
@@ -359,6 +372,16 @@ app.delete('/users/:id', async (req, res) => {
 });
 
 //#endregion
+
+// deletes notes that have been soft deleted after 30 days from being soft deleted
+cron.schedule('0 0 * * *', async () => {
+    try {
+        await deleteNotes(); // Call the function to delete notes
+        console.log("Notes deleted successfully.");
+    } catch (err) {
+        console.error("Error deleting notes:", err);
+    }
+});
 
 app.use((err, req, res, next) => {
     console.error(err.stack);

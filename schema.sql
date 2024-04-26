@@ -17,6 +17,8 @@ CREATE TABLE notes (
     title VARCHAR(250) NOT NULL,
     content TEXT NOT NULL,
     url VARCHAR(2048) NOT NULL,
+    is_deleted INT NOT NULL,
+    date_deleted DATE,
     CONSTRAINT ID3 FOREIGN KEY (userid) REFERENCES users(userid) on DELETE CASCADE
 );
 
@@ -39,9 +41,10 @@ INSERT INTO users (firstname, lastname, username, email, password) VALUES
 ('testUser', 'testUser', 'testuser1', 'testUser@gmail.com', 'testuser1'),
 ('adminUser', 'adminUser', 'Admin', 'adminUser@gmail.com', 'Admin');
 
-INSERT INTO notes (userid, title, content, url) VALUES
-(1, 'NEW YORK TIMES', '(Some text from the New York Times)', 'https://www.nytimes.com/'),
-(2, 'FORBES', '(Some text from a Forbes article)', 'https://www.forbes.com/sites/forbesfinancecouncil/2023/07/03/the-power-of-a-teamwork-culture-maximizing-your-strengths/?sh=43024c6c11e1');
+INSERT INTO notes (userid, title, content, url, is_deleted, date_deleted) VALUES
+(1, 'NEW YORK TIMES', '(Some text from the New York Times)', 'https://www.nytimes.com/', 0, '2024-04-14'),
+(2, 'FORBES', '(Some text from a Forbes article)', 'https://www.forbes.com/sites/forbesfinancecouncil/2023/07/03/the-power-of-a-teamwork-culture-maximizing-your-strengths/?sh=43024c6c11e1', 0, '2024-04-15'),
+(1, 'NEW YORK TIMES', '(Some text from the New York Times)', 'https://www.nytimes.com/', 0, '2024-03-01');
 
 INSERT INTO tags (userid, tag) VALUES
 (1, 'Research'),
