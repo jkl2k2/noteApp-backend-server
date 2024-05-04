@@ -22,8 +22,8 @@ app.use((req, res, next) => {
 app.post("/notes", async (req, res) => {
     try {
 
-        const { userid, title, content, url, is_deleted, date} = req.body;
-        const note = await createNote(userid, title, content, url, is_deleted, date);
+        const { userid, title, content, url} = req.body;
+        const note = await createNote(userid, title, content, url, 0, null);
 
         if (note.length === 0) {
             res.status(500).json({ error: `Unknown error posting new note with title=${title} linked to url=${url}` });
@@ -41,12 +41,14 @@ app.get("/notes", async (req, res) => {
     try {
         let notes;
 
-        if(req.query.userid && req.query.is_deleted){
-            notes = await getAllUserNotes(req.query.userid, req.query.is_deleted);
+        if(req.query.userid && req.query.deleted){
+            notes = await getAllUserNotes(req.query.userid, req.query.deleted);
+        } else if (req.query.userid) {
+            notes = await getAllNotesByUserId(req.query.userid);
         } else {
             notes = await getAllNotes();
         }
-
+   
         if (notes.length === 0) {
             res.status(404).json({ error: "No notes were found" });
         } else {

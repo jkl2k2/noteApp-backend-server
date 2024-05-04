@@ -41,6 +41,16 @@ module.exports = function () {
         return rows;
     };
 
+    this.getAllNotesByUserId = async function getAllNotesByUserId(id) {
+        const connection = await pool.getConnection();
+        const [rows] = await connection.query(`
+    SELECT *
+    FROM notes
+    WHERE userid = ?`, [id]);
+        connection.release();
+        return rows;
+    };
+
     this.getNoteById = async function getNoteById(noteID) {
         const [row] = await pool.query(`
     SELECT *
