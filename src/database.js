@@ -31,7 +31,17 @@ module.exports = function () {
         return rows;
     };
 
-    this.getAllUserNotes = async function getAllUserNotes(id) {
+    this.getAllUserNotes = async function getAllUserNotes(id, is_deleted) {
+        const connection = await pool.getConnection();
+        const [rows] = await connection.query(`
+    SELECT *
+    FROM notes
+    WHERE userid = ? and is_deleted = ?`, [id, is_deleted]);
+        connection.release();
+        return rows;
+    };
+
+    this.getAllNotesByUserId = async function getAllNotesByUserId(id) {
         const connection = await pool.getConnection();
         const [rows] = await connection.query(`
     SELECT *
@@ -60,21 +70,28 @@ module.exports = function () {
         return row;
     };
 
-    this.createNote = async function createNote(userid, title, content, url) {
+    this.createNote = async function createNote(userid, title, content, url, is_deleted, date_deleted) {
         const connection = await pool.getConnection();
         const [newNote] = await connection.query(`
-        INSERT INTO notes (userid, title, content, url)
-        VALUES (?, ?, ?, ?)`, [userid, title, content, url]);
+        INSERT INTO notes (userid, title, content, url, is_deleted, date_deleted)
+        VALUES (?, ?, ?, ?, ?, ?)`, [userid, title, content, url, is_deleted, date_deleted]);
         connection.release();
 
         const id = newNote.insertId;
         return getNoteById(id);
     };
 
-    this.deleteNote = async function deleteNote(id) {
+    this.softdeleteNote = async function softdeleteNote(is_deleted, date_deleted, id) {
         const [note] = await pool.query(`
-        DELETE FROM notes WHERE noteid = ?`, [id]);
+        UPDATE notes SET is_deleted = ?, date_deleted = ? WHERE noteid = ?`, [is_deleted, date_deleted, id]);
     };
+
+    this.deleteNotes = async function deleteNotes(){
+        const connection = await pool.getConnection();
+        connection.query(`
+        DELETE FROM notes WHERE date_deleted < CURRENT_DATE - 30 AND is_deleted = 1`);
+        connection.release();
+    }
 
     this.getAllTags = async function getAllTags() {
         const [rows] = await pool.query(`SELECT * FROM tags`);
