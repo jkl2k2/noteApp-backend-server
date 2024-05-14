@@ -1,6 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
-const cron =  require('node-cron');
+const cron = require('node-cron');
 require('./database.js')();
 
 const app = express();
@@ -10,8 +10,8 @@ app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader('Access-Control-Allow-Methods', 'DELETE');
     res.header(
-      "Access-Control-Allow-Headers",
-      "Origin, X-Requested-With, Content-Type, Accept"
+        "Access-Control-Allow-Headers",
+        "Origin, X-Requested-With, Content-Type, Accept"
     );
     next();
 });
@@ -21,8 +21,12 @@ app.use((req, res, next) => {
 // CREATE new note
 app.post("/notes", async (req, res) => {
     try {
+        const { userid, title, content, url } = req.body;
 
-        const { userid, title, content, url} = req.body;
+        if (!userid || !title || !content || !url) {
+            return res.status(400).json({ error: `Malformed request: missing note field(s)` });
+        }
+
         const note = await createNote(userid, title, content, url, 0, null);
 
         if (note.length === 0) {
@@ -41,14 +45,14 @@ app.get("/notes", async (req, res) => {
     try {
         let notes;
 
-        if(req.query.userid && req.query.deleted){
+        if (req.query.userid && req.query.deleted) {
             notes = await getAllUserNotes(req.query.userid, req.query.deleted);
         } else if (req.query.userid) {
             notes = await getAllNotesByUserId(req.query.userid);
         } else {
             notes = await getAllNotes();
         }
-   
+
         if (notes.length === 0) {
             res.status(404).json({ error: "No notes were found" });
         } else {
@@ -147,6 +151,11 @@ app.post("/notes/:id", async (req, res) => {
 app.post("/tags", async (req, res) => {
     try {
         const { userid, name } = req.body;
+
+        if (!userid || !name) {
+            return res.status(400).json({ error: `Malformed request: missing note field(s)` });
+        }
+
         const tagLookup = await getUserTagByName(userid, name);
 
         if (tagLookup.length !== 0) {
